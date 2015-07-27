@@ -1,0 +1,51 @@
+p {
+	font-family:Arial, Helvetica, sans-serif;
+	font-size:14px;
+}
+
+select {
+	position:relative;
+	width:184px;
+	left:16px;
+	margin-bottom:7px;
+}
+
+table > tbody > tr > td {
+	font-family:Arial, Helvetica, sans-serif;
+	font-size:13px;
+}
+
+table > tbody > tr > td > input {
+	width:70px;
+	border:1px solid #000;
+}
+
+.edit {
+	border:1px solid #000;
+}
+
+.time {
+	display:none;
+	position:relative;
+	float:right;
+	top:4px;
+	right:12px;
+	width:11px;
+	height:11px;
+	border-radius:11px;
+	background-color:#F00;
+}
+
+#left > div > input {
+	width:70px;
+	margin-bottom:7px;
+}
+
+#right > input {
+	width:100px;
+}
+
+#left {
+	position:relative;
+	float:left;
+}
