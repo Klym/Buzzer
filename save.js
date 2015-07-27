@@ -78,7 +78,7 @@ function getLength(i,num) { // Функция определяет длину п
 }
 
 function getLessonLength() { // Функция определяет длину урока
-	for (var i = 0; i < inputs.length; i++) {
+	for (var i = 0; i < inputs.length - 1; i++) {
 		if ((inputs[i].value == '' || inputs[i+1].value == '') || inputs[i].type == "checkbox") {
 			continue;
 		} else {
@@ -89,7 +89,7 @@ function getLessonLength() { // Функция определяет длину �
 }
 
 function getBreakLength() { // Функция определяет длину перемены
-	for (var i = 1; i < inputs.length; i++) {
+	for (var i = 1; i < inputs.length - 2; i++) {
 		if ((i == 4 || i == 7) || (inputs[i].value == '' || inputs[i+2].value == '') || (i % 3) == 0 || inputs[i].type == "checkbox") {
 			continue;
 		} else {
@@ -119,9 +119,6 @@ function check() { // Функция сравнивает значение с р
 		if (!pattern.test(inputs[i].value) || (!test[0] && test[0] != 0) || (!test[1] && test[1] != 0) || (test[0] >= 24 || test[0] < 0) || (test[1] >= 60 || test[1] < 0)) { // Если значение не соответствует регулярному выражению
 			inputs[i].style.border = "2px solid red"; // Подсвечиваем поле
 			count++;
-			window.clearInterval(timer);
-			alert("Неверно заполнено поле"); // Выводим соответствующее сообщение
-			getCurrentTime();
 		} else { // Если же соответствует
 			inputs[i].style.border = "1px solid #000"; // Сбрасываем рамку
 		}
@@ -222,6 +219,7 @@ function getCurrentTime() { // Возвращает текущее время с
 		var currentTime = req.getResponseHeader("Current-Time");
 		time = new Date(currentTime); // На основе полученого времени создаем обьект Date
 		// Запускаем ф-цию отслеживания маячка
+		time.setTime(time.getTime() + 1000);
 		timer = window.setInterval("position()", 1000); // Запускаем таймер выполнения функции
 	}
 	req.open("HEAD","gettime.php",true);
@@ -248,6 +246,7 @@ function position() { // Функция определяет позицию ма
 			inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "none";
 		}
 	}
+	// Выводим время и увеличиваем его значение на 1 секунду
 	servTime.innerHTML = time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds();
 	time.setTime(time.getTime() + 1000);
 }
@@ -277,6 +276,7 @@ function change() { // Функция изменяет значения поле
 			getLessonLength();
 			getBreakLength();
 			getLongBreakLength();
+			check();
 			checkFlag();
 		}
 	}
