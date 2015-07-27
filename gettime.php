@@ -1,6 +1,3 @@
 <?php
-$h = date("H");
-$m = date("i");
-header("Current-Hours: " . $h);
-header("Current-Minutes: " . $m);
+header("Current-Time: " . date("d M Y H:i:s"));
 ?>

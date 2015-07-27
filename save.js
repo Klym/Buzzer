@@ -1,6 +1,7 @@
 var inputs; // Все поля формы
 var params; // Поля содержащие время уроков, перемен
 var timer;	// Таймер проверки маячка
+var time;	// Текущее время полученное с сервера 
 var pattern = new RegExp("\\d{2}\:\\d{2}$"); // Регулярное выражение на корректность данных
 var lessonLength; // Длина урока
 var breakLength; // Длина перемены
@@ -26,7 +27,8 @@ window.onload = function() { // При загрузке документа
 		inputs[i].onkeyup = recount; // При изменении поля пересчитуем расписание
 		inputs[i].onchange = check; // При сбросе фокуса с поля проверяем поле на корректность введенных данных
 	}
-	position(); // Определяем местонахождение маячка
+	// Определяем местонахождение маячка
+	getCurrentTime();
 	// Определяем параметры продолжительности
 	getLessonLength();
 	getBreakLength();
@@ -117,7 +119,9 @@ function check() { // Функция сравнивает значение с р
 		if (!pattern.test(inputs[i].value) || (!test[0] && test[0] != 0) || (!test[1] && test[1] != 0) || (test[0] >= 24 || test[0] < 0) || (test[1] >= 60 || test[1] < 0)) { // Если значение не соответствует регулярному выражению
 			inputs[i].style.border = "2px solid red"; // Подсвечиваем поле
 			count++;
+			window.clearInterval(timer);
 			alert("Неверно заполнено поле"); // Выводим соответствующее сообщение
+			getCurrentTime();
 		} else { // Если же соответствует
 			inputs[i].style.border = "1px solid #000"; // Сбрасываем рамку
 		}
@@ -164,7 +168,9 @@ function recount() { // Функция пересчитует расписани
 						// Если что-то не так, подсвечиваем поле, блокируем кнопку save, выводим сообщение и прекращаем работу ф-ции
 						inputs[m].style.border = "2px solid red";
 						document.options.save.disabled = true;
+						window.clearInterval(timer);
 						alert("Ошибка. Недопустимое значение параметра");
+						getCurrentTime();
 						return false;
 					}
 					// Если со значениями все в порядке, сбрасываем рамку и продолжаем работу
@@ -206,39 +212,44 @@ function recount() { // Функция пересчитует расписани
 			}
 		}
 	}
-	window.clearTimeout(timer); // Останавливаем предыдущий таймер
-	position(); // Переопределяем маячек текущего урока
 }
 
-function position() { // Функция определяет позицию маячка текущего урока
+function getCurrentTime() { // Возвращает текущее время с сервера и запускает ф-цию отслеживания маячка
 	var req = getXmlHttpRequest();
 	req.onreadystatechange = function() {
 		if (req.readyState != 4) return;
 		// Получаем время сервера
-		var serverHours = req.getResponseHeader("Current-Hours");
-		var serverMinutes = req.getResponseHeader("Current-Minutes");
-		var t = new Date(0,0,0,serverHours,serverMinutes); // На основе полученого времени создаем обьект Date
-		var inputs = document.options.edit;
-		var flags = document.getElementsByTagName("span");
-		for (var i = 0; i < inputs.length; i = i + 2) { // Перебираем все пары полей(начало и конца урока)
-			// Обрезаем часы и минуты начала и конца урока
-			var arr1 = inputs[i].value.split(":");
-			var arr2 = inputs[i+1].value.split(":")
-			var test = new Date(0,0,0,arr1[0],arr1[1]); // Создаем обьект Date на основе начала урока
-			var time = new Date(0,0,0,t.getHours(),t.getMinutes()); // Текущее время
-			var test1 = new Date(0,0,0,arr2[0],arr2[1]); // Создаем обьект Date на основе конца урока
-			if ((time >= test && time <= test1)) { // Сравниваем значение времени
-				// Если текущее время входит в промежуток между началом и концом урока то отобразить индикатор
-				inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "block";
-			} else {
-				// Иначе спрятать его
-				inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "none";
-			}
-		}
+		var currentTime = req.getResponseHeader("Current-Time");
+		time = new Date(currentTime); // На основе полученого времени создаем обьект Date
+		// Запускаем ф-цию отслеживания маячка
+		timer = window.setInterval("position()", 1000); // Запускаем таймер выполнения функции
 	}
 	req.open("HEAD","gettime.php",true);
 	req.send(null);
-	timer = window.setTimeout("position()",1000); // Запускаем таймер выполнения функции
+}
+
+function position() { // Функция определяет позицию маячка текущего урока
+	var inputs = document.options.edit;
+	var flags = document.getElementsByTagName("span");
+	var servTime = document.getElementById("servTime");
+	for (var i = 0; i < inputs.length; i = i + 2) { // Перебираем все пары полей(начало и конца урока)
+		// Обрезаем часы и минуты начала и конца урока
+		var arr1 = inputs[i].value.split(":");
+		var arr2 = inputs[i+1].value.split(":")
+		var startLessTime = new Date(0, 0, 0, arr1[0], arr1[1]); // Создаем обьект Date на основе начала урока
+		var endLessTime = new Date(0, 0, 0, arr2[0], arr2[1]); // Создаем обьект Date на основе конца урока
+		var currentTime = new Date(0, 0, 0, time.getHours(), time.getMinutes(), time.getSeconds()); // Текущее время
+		// Сравниваем значение времени
+		if ((currentTime >= startLessTime && currentTime <= endLessTime)) {
+			// Если текущее время входит в промежуток между началом и концом урока то отобразить индикатор
+			inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "block";
+		} else {
+			// Иначе спрятать его
+			inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "none";
+		}
+	}
+	servTime.innerHTML = time.getHours() + ":" + time.getMinutes() + ":" + time.getSeconds();
+	time.setTime(time.getTime() + 1000);
 }
 
 function change() { // Функция изменяет значения полей в зависимости от выбора типа
@@ -288,7 +299,9 @@ function save() { // Функция отправляет данные на се�
 	for(var i = 0; i < values.length; i++) { // Перебираем отобранные значения
 		if (values[i][2] == 1) { // Заносим только те, на которых состояние чекбокса = 1
 			if (!pattern.test(values[i][0]) || !pattern.test(values[i][1])) { // Еще раз проверим значения на корректность
+				window.clearInterval(timer);
 				alert("Ошибка. Не все данные введены корректно");
+				getCurrentTime();
 				return false;
 			}
 			data.push(values[i][0],values[i][1]);
@@ -301,7 +314,9 @@ function save() { // Функция отправляет данные на се�
 	var req = getXmlHttpRequest();
 	req.onreadystatechange = function() {
 		if (req.readyState == 4) {
+			window.clearInterval(timer);
 			alert(req.responseText);
+			getCurrentTime();
 		}
 	}
 	req.open("POST","save.php",true);

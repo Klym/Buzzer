@@ -45,6 +45,7 @@ $files = scandir($dir);
         	<tr><td>Урок:</td><td><input type="text" name="lesson"></td></tr>
             <tr><td>Перемена:</td><td><input type="text" name="short_break"></td></tr>
             <tr><td>Длинная перемена:</td><td><input type="text" name="long_break"></td></tr>
+            <tr><td>Время на сервере:</td><td id="servTime"></td></tr>
         </table>
 	</div>
 </form>
