@@ -21,22 +21,27 @@ $files = scandir($dir);
 </head>
 <body>
 <form method="post" name="options">
-    <div id="left">
+    <div id="left">    	
         <select name="day">
-        	<option value="0"></option>
+        	<option value="0">Шаблоны расписаний:</option>
 			<?php
-			for($i = 2; $i < count($files); $i++) {
-				$files[$i] = iconv("windows-1251","utf-8",$files[$i]);
-				printf("<option>%s</option>",basename($files[$i],".txt"));
+			for ($i = 2; $i < count($files); $i++) {
+				$files[$i] = iconv("windows-1251", "utf-8", $files[$i]);
+				printf("<option>%s</option>", basename($files[$i], ".txt"));
 			}
 			?>
         </select><br>
         <?php
-        for($i = 0, $a = 1; $i < count($zvonki); $i = $i + 2, $a++) { # Вывод массива в форму
+        for ($i = 0, $a = 1; $i < count($zvonki); $i = $i + 2, $a++) { # Вывод массива в форму
             printf("<div>%s. <input class='edit' type='text' maxlength='5' name='edit' value='%s'> - <input class='edit' type='text' maxlength='5' name='edit' value='%s'> <input type='checkbox' style='width:20px;' checked><span class='time'></span></div>",$a,$zvonki[$i],$zvonki[$i+1]);
         }
         ?>
 		<p><label><input type="checkbox" name="proportional" checked> Пропорциональное изменение</label></p>
+        <div id="saveTemplates">
+	        <button name="saveTemplate">Сохранить как новый шаблон</button><br>
+            <button name="updateTemplate">Обновить существующий</button><br>
+            <button name="deleteTemplate" >Удалить шаблон</button>
+        </div>
 	</div>
     <div id="right">
         <input type="submit" id="save" name="save" value="Записать"><br>
@@ -46,6 +51,7 @@ $files = scandir($dir);
             <tr><td>Перемена:</td><td><input type="text" name="short_break"></td></tr>
             <tr><td>Длинная перемена:</td><td><input type="text" name="long_break"></td></tr>
             <tr><td>Время на сервере:</td><td id="servTime"></td></tr>
+            <tr><td>До звонка осталось:</td><td id="ringTime"></td></tr>
         </table>
 	</div>
 </form>

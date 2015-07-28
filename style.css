@@ -41,6 +41,10 @@ table > tbody > tr > td > input {
 	margin-bottom:7px;
 }
 
+#saveTemplates > button {
+	margin-bottom:7px;
+}
+
 #right > input {
 	width:100px;
 }

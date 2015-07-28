@@ -14,6 +14,9 @@ window.onload = function() { // При загрузке документа
 	// Вешаем события клика на кнопки
 	document.options.save.onclick = save;
 	document.options.ring.onclick = ring;
+	document.options.saveTemplate.onclick = saveTemplate;
+	document.options.updateTemplate.onclick = updateTemplate;
+	document.options.deleteTemplate.onclick = deleteTemplate;
 	window.params = [document.options.lesson,document.options.short_break,document.options.long_break]; // Отбираем поля содержащие время уроков, перемен
 	for (var i = 0; i < params.length; i++) {
 		params[i].onchange = recount; // При их изменении запускаем ф-цию пересчета
@@ -230,10 +233,13 @@ function position() { // Функция определяет позицию ма
 	var inputs = document.options.edit;
 	var flags = document.getElementsByTagName("span");
 	var servTime = document.getElementById("servTime");
+	var ringTime = document.getElementById("ringTime");
+	var leftToRing = new Date();
+	var ringTimeFlag = false;
 	for (var i = 0; i < inputs.length; i = i + 2) { // Перебираем все пары полей(начало и конца урока)
 		// Обрезаем часы и минуты начала и конца урока
 		var arr1 = inputs[i].value.split(":");
-		var arr2 = inputs[i+1].value.split(":")
+		var arr2 = inputs[i+1].value.split(":");
 		var startLessTime = new Date(0, 0, 0, arr1[0], arr1[1]); // Создаем обьект Date на основе начала урока
 		var endLessTime = new Date(0, 0, 0, arr2[0], arr2[1]); // Создаем обьект Date на основе конца урока
 		var currentTime = new Date(0, 0, 0, time.getHours(), time.getMinutes(), time.getSeconds()); // Текущее время
@@ -241,9 +247,27 @@ function position() { // Функция определяет позицию ма
 		if ((currentTime >= startLessTime && currentTime <= endLessTime)) {
 			// Если текущее время входит в промежуток между началом и концом урока то отобразить индикатор
 			inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "block";
+			// Расчитать и вывести время до конца урока
+			leftToRing.setTime(endLessTime - currentTime);
+			ringTime.innerHTML = leftToRing.getMinutes() + ":" + leftToRing.getSeconds();
+			ringTimeFlag = true;
 		} else {
 			// Иначе спрятать его
 			inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "none";
+			// Если сейчас перемена, расчитать и вывести время до начала урока
+			if (i < inputs.length - 2) {
+				var nextLesson = inputs[i+2].value.split(":");
+				var nextLessTime = new Date(0, 0, 0, nextLesson[0], nextLesson[1]);
+				if (currentTime > endLessTime && currentTime < nextLessTime) {
+					leftToRing.setTime(nextLessTime - currentTime);
+					ringTime.innerHTML = leftToRing.getMinutes() + ":" + leftToRing.getSeconds();
+					ringTimeFlag = true;
+				}
+			}
+		}
+		// Если время находится вне расписания, отменить вывод оставшегося времени до звонка
+		if (!ringTimeFlag) {
+			ringTime.innerHTML = "";
 		}
 	}
 	// Выводим время и увеличиваем его значение на 1 секунду
@@ -284,7 +308,7 @@ function change() { // Функция изменяет значения поле
 	req.send(opt);
 }
 
-function save() { // Функция отправляет данные на сервер и сохраняет их в файле
+function getTimetable() { // Собирает данные расписания с формы
 	var values = new Array(); // Многомерный массив всех значений
 	var data = new Array(); // Массив для отправки (отброшены значение, где сброшены чекбоксы)
 	var check; // Состояние чекбокса (0 или 1)
@@ -309,8 +333,12 @@ function save() { // Функция отправляет данные на се�
 			data.push("","");
 		}
 	}
+	return data;
+}
+
+function save() { // Функция отправляет данные на сервер и сохраняет их в файле	
 	// Аяксом отправляем данные на сервер.
-	var jsonData = JSON.stringify(data);
+	var jsonData = JSON.stringify(getTimetable());
 	var req = getXmlHttpRequest();
 	req.onreadystatechange = function() {
 		if (req.readyState == 4) {
@@ -337,4 +365,69 @@ function ring() { // Функция подачи звонка
 	req.open("POST","ring.php",true);
 	req.send("1");
 	return false; // Оменить стандартное поведение кнопки
+}
+
+function saveTemplate() { // Сохраняет шаблон
+	window.clearInterval(timer);
+	var templateName = prompt("Введите имя шаблона:");
+	getCurrentTime();
+	if (templateName) {
+		var data = { name: templateName, values: getTimetable(), action: "add"}; // Отправляем имя нового файла, данные и действие
+		var jsonData = JSON.stringify(data);
+		var req = getXmlHttpRequest();
+		req.onreadystatechange = function() {
+			if (req.readyState == 4) {
+				window.clearInterval(timer);
+				alert(req.responseText);
+				getCurrentTime();
+				if (req.responseText == "Данные успешно сохранены в файл.") {
+					// Добавляем в select новый option
+					var newFile = document.createElement("option");
+					var name = document.createTextNode(templateName);
+					newFile.appendChild(name);
+					document.options.day.appendChild(newFile);
+				}
+			}
+		}
+		req.open("POST", "templates.php", true);
+		req.send(jsonData);
+	}
+	return false;
+}
+
+function updateTemplate() { // Обновляет существующий шаблон
+	return false;
+}
+
+function deleteTemplate() { // Удаляет шаблон
+	var fileList = document.options.day; // Список всех шаблонов
+	var option; // Шаблон для удаления
+	for (var i = 2; i < fileList.childNodes.length; i++) {
+		// Находим выбранный шаблон
+		if (fileList.childNodes[i].nodeType != 3 && fileList.childNodes[i].selected) {
+			option = fileList.childNodes[i];
+		}		
+	}
+	if (option) { // Если шаблон выбран
+		var data = { name: option.value, action: "delete" }; // Отправляем имя файла и действие
+		var jsonData = JSON.stringify(data);
+		var req = getXmlHttpRequest();
+		req.onreadystatechange = function() {
+			if (req.readyState == 4) {
+				window.clearInterval(timer);
+				alert(req.responseText);
+				getCurrentTime();
+				if (req.responseText == "Шаблон успешно удален.") {
+					fileList.removeChild(option);
+				}
+			}
+		}
+		req.open("POST", "templates.php", true);
+		req.send(jsonData);
+	} else {
+		window.clearInterval(timer);
+		alert("Вы не выбрали шаблон для удаления.");
+		getCurrentTime();
+	}
+	return false;
 }
