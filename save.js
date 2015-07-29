@@ -395,11 +395,7 @@ function saveTemplate() { // Сохраняет шаблон
 	return false;
 }
 
-function updateTemplate() { // Обновляет существующий шаблон
-	return false;
-}
-
-function deleteTemplate() { // Удаляет шаблон
+function getTemplateObject() { // Получает выбранный option
 	var fileList = document.options.day; // Список всех шаблонов
 	var option; // Шаблон для удаления
 	for (var i = 2; i < fileList.childNodes.length; i++) {
@@ -408,6 +404,40 @@ function deleteTemplate() { // Удаляет шаблон
 			option = fileList.childNodes[i];
 		}		
 	}
+	return option;
+}
+
+function updateTemplate() { // Обновляет существующий шаблон
+	var option = getTemplateObject();
+	if (option) { // Если шаблон выбран
+		window.clearInterval(timer);
+		var confirmed = window.confirm("Вы действительно хотите обновить шаблон \"" + option.value + "\"?");
+		if (!confirmed) {
+			getCurrentTime();
+			return false;
+		}
+		var data = { name: option.value, values: getTimetable(), action: "update"};
+		var jsonData = JSON.stringify(data);
+		var req = getXmlHttpRequest();
+		req.onreadystatechange = function() {
+			if (req.readyState == 4) {
+				window.clearInterval(timer);
+				alert(req.responseText);
+				getCurrentTime();				
+			}
+		}
+		req.open("POST", "templates.php", true);
+		req.send(jsonData);
+	} else {
+		window.clearInterval(timer);
+		alert("Вы не выбрали шаблон для обновления.");
+		getCurrentTime();
+	}
+	return false;
+}
+
+function deleteTemplate() { // Удаляет шаблон
+	var option = getTemplateObject();
 	if (option) { // Если шаблон выбран
 		window.clearInterval(timer);
 		var confirmed = window.confirm("Вы действительно хотите удалить шаблон \"" + option.value + "\"?");
@@ -424,7 +454,7 @@ function deleteTemplate() { // Удаляет шаблон
 				alert(req.responseText);
 				getCurrentTime();
 				if (req.responseText == "Шаблон успешно удален.") {
-					fileList.removeChild(option);
+					option.parentNode.removeChild(option);
 				}
 			}
 		}
