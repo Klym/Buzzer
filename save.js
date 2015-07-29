@@ -249,7 +249,8 @@ function position() { // Функция определяет позицию ма
 			inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "block";
 			// Расчитать и вывести время до конца урока
 			leftToRing.setTime(endLessTime - currentTime);
-			ringTime.innerHTML = leftToRing.getMinutes() + ":" + leftToRing.getSeconds();
+			ringTime.innerHTML = (leftToRing.getHours() == 3) ? "" : (leftToRing.getHours() - 3) + ":";
+			ringTime.innerHTML += leftToRing.getMinutes() + ":" + leftToRing.getSeconds();
 			ringTimeFlag = true;
 		} else {
 			// Иначе спрятать его
@@ -260,7 +261,8 @@ function position() { // Функция определяет позицию ма
 				var nextLessTime = new Date(0, 0, 0, nextLesson[0], nextLesson[1]);
 				if (currentTime > endLessTime && currentTime < nextLessTime) {
 					leftToRing.setTime(nextLessTime - currentTime);
-					ringTime.innerHTML = leftToRing.getMinutes() + ":" + leftToRing.getSeconds();
+					ringTime.innerHTML = (leftToRing.getHours() == 3) ? "" : (leftToRing.getHours() - 3) + ":";
+					ringTime.innerHTML += leftToRing.getMinutes() + ":" + leftToRing.getSeconds();
 					ringTimeFlag = true;
 				}
 			}
