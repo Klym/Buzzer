@@ -409,6 +409,12 @@ function deleteTemplate() { // Удаляет шаблон
 		}		
 	}
 	if (option) { // Если шаблон выбран
+		window.clearInterval(timer);
+		var confirmed = window.confirm("Вы действительно хотите удалить шаблон \"" + option.value + "\"?");
+		if (!confirmed) {
+			getCurrentTime();
+			return false;
+		}
 		var data = { name: option.value, action: "delete" }; // Отправляем имя файла и действие
 		var jsonData = JSON.stringify(data);
 		var req = getXmlHttpRequest();
