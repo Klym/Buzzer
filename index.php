@@ -39,8 +39,8 @@ $files = scandir($dir);
 		<p><label><input type="checkbox" name="proportional" checked> Пропорциональное изменение</label></p>
         <div id="saveTemplates">
 	        <button name="saveTemplate">Сохранить как новый шаблон</button><br>
-            <button name="updateTemplate">Обновить существующий</button><br>
-            <button name="deleteTemplate" >Удалить шаблон</button>
+            <button name="updateTemplate" disabled>Обновить существующий</button><br>
+            <button name="deleteTemplate" disabled>Удалить шаблон</button>
         </div>
 	</div>
     <div id="right">
