@@ -249,7 +249,7 @@ function position() { // Функция определяет позицию ма
 			inputs[i+1].nextSibling.nextSibling.nextSibling.style.display = "block";
 			// Расчитать и вывести время до конца урока
 			leftToRing.setTime(endLessTime - currentTime);
-			ringTime.innerHTML = (leftToRing.getHours() == 3) ? "" : (leftToRing.getHours() - 3) + ":";
+			ringTime.innerHTML = (leftToRing.getHours() == 2) ? "" : (leftToRing.getHours() - 2) + ":";
 			ringTime.innerHTML += leftToRing.getMinutes() + ":" + leftToRing.getSeconds();
 			ringTimeFlag = true;
 		} else {
@@ -261,7 +261,7 @@ function position() { // Функция определяет позицию ма
 				var nextLessTime = new Date(0, 0, 0, nextLesson[0], nextLesson[1]);
 				if (currentTime > endLessTime && currentTime < nextLessTime) {
 					leftToRing.setTime(nextLessTime - currentTime);
-					ringTime.innerHTML = (leftToRing.getHours() == 3) ? "" : (leftToRing.getHours() - 3) + ":";
+					ringTime.innerHTML = (leftToRing.getHours() == 2) ? "" : (leftToRing.getHours() - 2) + ":";
 					ringTime.innerHTML += leftToRing.getMinutes() + ":" + leftToRing.getSeconds();
 					ringTimeFlag = true;
 				}
@@ -285,7 +285,13 @@ function change() { // Функция изменяет значения поле
 			optValue = option[i].value; // Определяем значение выбранного select'а
 		}
 	}
-	if (optValue == 0) return false;
+	document.options.updateTemplate.disabled = false;
+	document.options.deleteTemplate.disabled = false;
+	if (optValue == 0) {
+		document.options.updateTemplate.disabled = true;
+		document.options.deleteTemplate.disabled = true;
+		return false;
+	}
 	// Отправляем значение select'а на сервер и получаем массив звонков из стандартного файла
 	var opt = JSON.stringify(optValue);
 	var req = getXmlHttpRequest();
@@ -457,6 +463,8 @@ function deleteTemplate() { // Удаляет шаблон
 				getCurrentTime();
 				if (req.responseText == "Шаблон успешно удален.") {
 					option.parentNode.removeChild(option);
+					document.options.updateTemplate.disabled = true;
+					document.options.deleteTemplate.disabled = true;
 				}
 			}
 		}
