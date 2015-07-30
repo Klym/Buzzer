@@ -131,10 +131,16 @@ function check() { // Функция сравнивает значение с р
 		// Снимаем блок с кнопки сохранения
 		document.options.save.disabled = false;
 		document.options.saveTemplate.disabled = false;
+		if (optValue && optValue != 0) {
+			document.options.updateTemplate.disabled = false;
+		}
 	} else {
 		// Блокируем кнопку сохранения
 		document.options.save.disabled = true;
 		document.options.saveTemplate.disabled = true;
+		if (optValue && optValue != 0) {
+			document.options.updateTemplate.disabled = true;
+		}
 	}
 }
 
