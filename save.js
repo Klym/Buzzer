@@ -6,6 +6,7 @@ var pattern = new RegExp("\\d{2}\:\\d{2}$"); // Регулярное выраж�
 var lessonLength; // Длина урока
 var breakLength; // Длина перемены
 var longBreakLength; // Длина длинной перемены
+var optValue;	// Значение выбранного шаблона
 
 window.onload = function() { // При загрузке документа
 	window.inputs = document.getElementById("left").getElementsByTagName("input");
@@ -127,9 +128,13 @@ function check() { // Функция сравнивает значение с р
 		}
 	}
 	if (count == 0) {
-		document.options.save.disabled = false; // Снимаем блок с кнопки сохранения
+		// Снимаем блок с кнопки сохранения
+		document.options.save.disabled = false;
+		document.options.saveTemplate.disabled = false;
 	} else {
-		document.options.save.disabled = true; // Блокируем кнопку сохранения
+		// Блокируем кнопку сохранения
+		document.options.save.disabled = true;
+		document.options.saveTemplate.disabled = true;
 	}
 }
 
@@ -168,6 +173,10 @@ function recount() { // Функция пересчитует расписани
 						// Если что-то не так, подсвечиваем поле, блокируем кнопку save, выводим сообщение и прекращаем работу ф-ции
 						inputs[m].style.border = "2px solid red";
 						document.options.save.disabled = true;
+						document.options.saveTemplate.disabled = true;
+						if (optValue && optValue != 0) {
+							document.options.updateTemplate.disabled = true;
+						}
 						window.clearInterval(timer);
 						alert("Ошибка. Недопустимое значение параметра");
 						getCurrentTime();
@@ -176,6 +185,10 @@ function recount() { // Функция пересчитует расписани
 					// Если со значениями все в порядке, сбрасываем рамку и продолжаем работу
 					this.style.border = '1px solid #000';
 					document.options.save.disabled = false;
+					document.options.saveTemplate.disabled = false;
+					if (optValue && optValue != 0) {
+						document.options.updateTemplate.disabled = false;
+					}
 					var lesson, pereryv, type;
 					lesson = document.options.lesson.value;
 					if (m == 3 || m == 5) { // Если сейчас очередь длинной перемены, то приравниваем соответствующее значение
@@ -279,7 +292,6 @@ function position() { // Функция определяет позицию ма
 
 function change() { // Функция изменяет значения полей в зависимости от выбора типа
 	var option = this.getElementsByTagName("option");
-	var optValue;
 	for(var i = 0; i < option.length; i++) {
 		if (option[i].selected) {
 			optValue = option[i].value; // Определяем значение выбранного select'а
@@ -301,7 +313,7 @@ function change() { // Функция изменяет значения поле
 			for(var i = 1, a = 0; i < inputs.length; i++, a = a + 2) {
 				// Изменяем значение всех полей формы
 				inputs[i-1].value = String.prototype.trim(get[a]);
-				inputs[i].value = String.prototype.trim(get[a+1]);
+				inputs[i].value = (get[a+1] == false) ? "" : String.prototype.trim(get[a+1]);
 				i = i + 2; // Перескакиваем чекбокс
 			}
 			// Определяем промежутки
@@ -345,8 +357,11 @@ function getTimetable() { // Собирает данные расписания 
 }
 
 function save() { // Функция отправляет данные на сервер и сохраняет их в файле	
+	var data = getTimetable();
+	if (!data) return false;
 	// Аяксом отправляем данные на сервер.
-	var jsonData = JSON.stringify(getTimetable());
+	var dataConfig = { values: data, action: "save" };
+	var jsonData = JSON.stringify(dataConfig);
 	var req = getXmlHttpRequest();
 	req.onreadystatechange = function() {
 		if (req.readyState == 4) {
@@ -355,7 +370,7 @@ function save() { // Функция отправляет данные на се�
 			getCurrentTime();
 		}
 	}
-	req.open("POST","save.php",true);
+	req.open("POST","templates.php",true);
 	req.send(jsonData);
 	return false; // Оменить стандартное поведение кнопки
 }
@@ -376,12 +391,14 @@ function ring() { // Функция подачи звонка
 }
 
 function saveTemplate() { // Сохраняет шаблон
+	var data = getTimetable();
+	if (!data) return false;
 	window.clearInterval(timer);
 	var templateName = prompt("Введите имя шаблона:");
 	getCurrentTime();
 	if (templateName) {
-		var data = { name: templateName, values: getTimetable(), action: "add"}; // Отправляем имя нового файла, данные и действие
-		var jsonData = JSON.stringify(data);
+		var dataConfig = { name: templateName, values: data, action: "add"}; // Отправляем имя нового файла, данные и действие
+		var jsonData = JSON.stringify(dataConfig);
 		var req = getXmlHttpRequest();
 		req.onreadystatechange = function() {
 			if (req.readyState == 4) {
@@ -416,6 +433,8 @@ function getTemplateObject() { // Получает выбранный option
 }
 
 function updateTemplate() { // Обновляет существующий шаблон
+	var data = getTimetable();
+	if (!data) return false;
 	var option = getTemplateObject();
 	if (option) { // Если шаблон выбран
 		window.clearInterval(timer);
@@ -424,8 +443,8 @@ function updateTemplate() { // Обновляет существующий ша�
 			getCurrentTime();
 			return false;
 		}
-		var data = { name: option.value, values: getTimetable(), action: "update"};
-		var jsonData = JSON.stringify(data);
+		var dataConfig = { name: option.value, values: data, action: "update"};
+		var jsonData = JSON.stringify(dataConfig);
 		var req = getXmlHttpRequest();
 		req.onreadystatechange = function() {
 			if (req.readyState == 4) {
